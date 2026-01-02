@@ -1,50 +1,49 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+name: 一键修复所有配置
+on: workflow_dispatch
 
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: 自动修复AndroidManifest.xml
+      run: |
+        echo "正在修复AndroidManifest.xml..."
+        # 完全重写文件
+        cat > app/src/main/AndroidManifest.xml << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <uses-permission android:name="android.permission.INTERNET" />
+    
     <application
-         android:allowBackup="true"
+        android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="IP配置工具"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-<!-- 针对HarmonyOS的后台限制 -->
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
-<!-- 添加电池优化豁免 -->
-<application>
-    <!-- ... -->
-    
-    <!-- 针对Android 12+的导出要求 -->
-    <activity
-        android:name=".MainActivity"
+        
+        <activity
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-    </activity>
-
-    <activity
-            android:name=".SettingsActivity"
-            android:exported="false" />
-    <!-- 广播接收器也需要声明 -->
-    <receiver
-            android:name=".ConfigReceiver"
-            android:exported="true"
-            android:enabled="true">
-            <intent-filter>
-                <action android:name="com.ktakilat.loan.ipConfig" />
-            </intent-filter>
-        </receiver>
-</application>
-
+        </activity>
+        
+    </application>
 </manifest>
+EOF
+        
+        echo "修复完成！"
+        
+    - name: 测试构建
+      run: |
+        chmod +x gradlew
+        ./gradlew assembleDebug
+        
+    - uses: actions/upload-artifact@v4
+      with:
+        name: fixed-apk
+        path: app/build/outputs/apk/debug/*.apk
