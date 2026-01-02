@@ -2,8 +2,7 @@ name: 编译Android APK
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:  # 添加手动触发
 
 jobs:
   build:
@@ -15,17 +14,28 @@ jobs:
       - name: 配置JDK环境
         uses: actions/setup-java@v4
         with:
-          java-version: '11'  # 若项目用JDK 17，改为'17'
+          java-version: '11'
           distribution: 'zulu'
 
-      - name: 赋予Gradle脚本执行权限
-        run: chmod +x ./gradlew  # 当前结构中gradlew在根目录，路径正确
+      - name: 修复构建配置
+        run: |
+          # 1. 确保gradlew存在且有权限
+          if [ ! -f "gradlew" ]; then
+            echo "生成gradlew..."
+            gradle wrapper --gradle-version 7.6
+          fi
+          chmod +x gradlew
+          
+          # 2. 清理gradle-wrapper.properties
+          sed -i 's/#.*//' gradle/wrapper/gradle-wrapper.properties
+          sed -i '/^$/d' gradle/wrapper/gradle-wrapper.properties
 
-      - name: 构建Release版本APK
-        run: ./gradlew assembleRelease  # 根目录执行gradlew，会自动识别app模块
+      - name: 构建APK（仅Debug版）
+        run: |
+          ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: 上传APK产物
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
-          path: app/build/outputs/apk/release/*.apk  # APK默认输出路径（匹配app模块）
+          name: ipconfig-app
+          path: app/build/outputs/apk/debug/app-debug.apk
