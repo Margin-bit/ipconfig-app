@@ -37,3 +37,9 @@ jobs:
         name: ipconfig-app
         path: app/build/outputs/apk/debug/*.apk
         retention-days: 7
+
+        - name: 直接显示错误
+  run: |
+    chmod +x gradlew
+    # 只显示错误部分
+    ./gradlew assembleDebug 2>&1 | grep -n "FAILED\|error\|Error\|Exception" -A 10 -B 5 | head -50
