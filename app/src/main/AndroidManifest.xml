@@ -1,17 +1,3 @@
-name: 一键修复所有配置
-on: workflow_dispatch
-
-jobs:
-  fix:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: 自动修复AndroidManifest.xml
-      run: |
-        echo "正在修复AndroidManifest.xml..."
-        # 完全重写文件
-        cat > app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     
@@ -32,18 +18,13 @@ jobs:
             </intent-filter>
         </activity>
         
+        <receiver
+            android:name=".ConfigReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.ktakilat.loan.ipConfig" />
+            </intent-filter>
+        </receiver>
+        
     </application>
 </manifest>
-EOF
-        
-        echo "修复完成！"
-        
-    - name: 测试构建
-      run: |
-        chmod +x gradlew
-        ./gradlew assembleDebug
-        
-    - uses: actions/upload-artifact@v4
-      with:
-        name: fixed-apk
-        path: app/build/outputs/apk/debug/*.apk
